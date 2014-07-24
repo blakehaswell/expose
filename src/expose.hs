@@ -46,6 +46,6 @@ recursiveGetFiles :: FilePath -> [FilePath] -> IO [FilePath]
 recursiveGetFiles searchDir filePaths = do
     files       <- getFiles filePaths
     dirs        <- getDirs filePaths
-    dirContents <- mapM (\dir -> getDirContents (searchDir </> dir)) dirs
+    dirContents <- mapM getDirContents dirs
     moreFiles   <- mapM (recursiveGetFiles searchDir) dirContents
     return $ files ++ concat moreFiles
