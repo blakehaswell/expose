@@ -8,7 +8,7 @@ OPTIONS
             looking for files.
 
     -d <directory>
-            Specify the directory which will be searched. Equivilant to:
+            Specify the directory which will be searched. Equivalent to:
                 $ cd <directory> && expose
 
     -e <extension>
