@@ -8,13 +8,14 @@ import System.FilePath ((</>), makeRelative, splitDirectories, takeExtensions)
 main :: IO ()
 main = do
     args <- getArgs
-    let searchDir       = getSearchDir args
-        isRecursive     = "-r" `elem` args
-        extensionFilter = getExtensionFilter args
-    dirContents <- getDirectoryContents searchDir
-    files <- if isRecursive then recursiveGetFiles searchDir dirContents
-                            else getFiles $ map (searchDir </>) dirContents
-    putStrLn . unlines . map (makeRelative searchDir) . filter extensionFilter $ files
+    let searchDir   = getSearchDir args
+        isRecursive = "-r" `elem` args
+        filterByExt = filter (getExtensionFilter args)
+    dirContents <- getDirContents searchDir
+    files       <- if isRecursive
+                     then recursiveGetFiles searchDir dirContents
+                     else getFiles dirContents
+    putStrLn . unlines . map (makeRelative searchDir) . filterByExt $ files
 
 getSearchDir :: [String] -> FilePath
 getSearchDir args = case elemIndex "-d" args of
@@ -23,8 +24,12 @@ getSearchDir args = case elemIndex "-d" args of
 
 getExtensionFilter :: [String] -> (FilePath -> Bool)
 getExtensionFilter args = case elemIndex "-e" args of
-                              Just i  -> (\fp -> takeExtensions fp == args !! (i + 1))
+                              Just i  ->
+                                  \fp -> takeExtensions fp == args !! (i + 1)
                               Nothing -> const True
+
+getDirContents :: FilePath -> IO [FilePath]
+getDirContents dir = return . map (dir </>) =<< getDirectoryContents dir
 
 getFiles :: [FilePath] -> IO [FilePath]
 getFiles = filterM doesFileExist
@@ -35,16 +40,12 @@ getDirs = filterM isDir
         isDir dir = if lastDir dir `elem` [".", ".."]
                       then return False
                       else doesDirectoryExist dir
-        lastDir = last . splitDirectories
+        lastDir   = last . splitDirectories
 
 recursiveGetFiles :: FilePath -> [FilePath] -> IO [FilePath]
-recursiveGetFiles relativeDir filePaths = do
-    dirs <- getDirs $ map (relativeDir </>) filePaths
-    moreFiles <- mapM doRecursiveGetFiles dirs
-    files <- getFiles $ map (relativeDir </>) filePaths
+recursiveGetFiles searchDir filePaths = do
+    files       <- getFiles filePaths
+    dirs        <- getDirs filePaths
+    dirContents <- mapM (\dir -> getDirContents (searchDir </> dir)) dirs
+    moreFiles   <- mapM (recursiveGetFiles searchDir) dirContents
     return $ files ++ concat moreFiles
-        where
-            doRecursiveGetFiles :: FilePath -> IO [FilePath]
-            doRecursiveGetFiles dir = do
-                dirContents <- getDirectoryContents dir
-                recursiveGetFiles dir dirContents
