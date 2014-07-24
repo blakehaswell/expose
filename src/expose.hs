@@ -3,22 +3,28 @@ import Data.List (elemIndex)
 import System.Directory (doesDirectoryExist, doesFileExist,
                          getDirectoryContents)
 import System.Environment (getArgs)
-import System.FilePath ((</>), makeRelative, splitDirectories)
+import System.FilePath ((</>), makeRelative, splitDirectories, takeExtensions)
 
 main :: IO ()
 main = do
     args <- getArgs
-    let searchDir = getSearchDir args
-        isRecursive = "-r" `elem` args
+    let searchDir       = getSearchDir args
+        isRecursive     = "-r" `elem` args
+        extensionFilter = getExtensionFilter args
     dirContents <- getDirectoryContents searchDir
     files <- if isRecursive then recursiveGetFiles searchDir dirContents
                             else getFiles $ map (searchDir </>) dirContents
-    putStrLn . unlines . map (makeRelative searchDir) $ files
+    putStrLn . unlines . map (makeRelative searchDir) . filter extensionFilter $ files
 
 getSearchDir :: [String] -> FilePath
 getSearchDir args = case elemIndex "-d" args of
-                        Just i -> args !! (i + 1)
+                        Just i  -> args !! (i + 1)
                         Nothing -> "."
+
+getExtensionFilter :: [String] -> (FilePath -> Bool)
+getExtensionFilter args = case elemIndex "-e" args of
+                              Just i  -> (\fp -> takeExtensions fp == args !! (i + 1))
+                              Nothing -> const True
 
 getFiles :: [FilePath] -> IO [FilePath]
 getFiles = filterM doesFileExist
