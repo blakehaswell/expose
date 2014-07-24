@@ -1,0 +1,34 @@
+                                    EXPOSE
+
+A minimal utility for finding files, somewhat inspired by find(1).
+
+OPTIONS
+
+    -r      Enable recursive mode. Will recursively descend the file hierarchy
+            looking for files.
+
+    -d <directory>
+            Specify the directory which will be searched. Equivilant to:
+                $ cd <directory> && expose
+
+    -e <extension>
+            Find only files ending with the specified extension. You can also
+            use this option to search for files with multiple extensions e.g.
+                $ expose -e ".min.js"
+
+EXAMPLES
+
+Find all files within the current directory:
+    $ expose
+
+Recursively find all files within the current directory hierarchy:
+    $ expose -r
+
+Find all JavaScript files within the current directory:
+    $ expose -e ".js"
+
+Recursively find all files within the src directory:
+    $ expose -r -d src
+
+Recursively find all JavaScript files within the src directory:
+    $ expose -r -d src -e ".js"
